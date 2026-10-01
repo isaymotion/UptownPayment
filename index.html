@@ -167,12 +167,21 @@
   .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .fields .wide { grid-column: 1 / -1; }
   @media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
-  label.field { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+  /* align-content: start stops a short field stretching to match a neighbour that has a hint line */
+  label.field { display: grid; gap: 6px; align-content: start; font-size: 13px; font-weight: 600; color: var(--ink-2); }
   .field input, .field select, .field textarea {
-    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
-    background: var(--bg); color: var(--ink); font-weight: 500; font-size: 15px;
+    width: 100%; min-width: 0; margin: 0; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font-weight: 500;
+    font-size: 16px; /* 16px or larger stops iOS Safari zooming in on focus */
   }
-  .field textarea { min-height: 70px; resize: vertical; }
+  /* One fixed height for every single-line control, so date, number and text boxes match */
+  .field input, .field select { height: 44px; line-height: 44px; }
+  /* iOS Safari draws date inputs as a native control with its own height and centred text */
+  .field input { -webkit-appearance: none; appearance: none; }
+  .field input[type="date"], .field input[type="month"] { display: block; text-align: left; line-height: normal; }
+  .field input::-webkit-date-and-time-value { text-align: left; margin: 0; min-height: 1.2em; }
+  .field input::-webkit-datetime-edit { padding: 0; }
+  .field textarea { min-height: 70px; padding: 10px 12px; resize: vertical; }
   .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: transparent; }
   .field .hint { font-weight: 500; font-size: 12px; color: var(--ink-2); }
   .row-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
