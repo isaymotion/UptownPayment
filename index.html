@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Payments to Uncle Tony</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #F2F5F8;
+    --surface: #FFFFFF;
+    --surface-2: #E8EDF3;
+    --ink: #17202C;
+    --ink-2: #566375;
+    --line: #D9E0E8;
+    --php: #0F766E;
+    --php-soft: #CDEDE8;
+    --usd: #4338CA;
+    --usd-soft: #E2E2FB;
+    --late: #B45309;
+    --late-soft: #FCE9CF;
+    --danger: #B42318;
+    --focus: #4338CA;
+    --shadow: 0 1px 2px rgba(23, 32, 44, .06), 0 8px 24px rgba(23, 32, 44, .06);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D131A;
+      --surface: #141C26;
+      --surface-2: #1D2733;
+      --ink: #E7EDF4;
+      --ink-2: #93A1B3;
+      --line: #273342;
+      --php: #2DD4BF;
+      --php-soft: #12403C;
+      --usd: #A5B4FC;
+      --usd-soft: #24285A;
+      --late: #FBBF24;
+      --late-soft: #45330D;
+      --danger: #F97066;
+      --focus: #A5B4FC;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 15px/1.55 Manrope, "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
+  h1, h2, h3 { margin: 0; line-height: 1.2; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* Header */
+  .top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+  .top h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 800; letter-spacing: -0.02em; }
+  .top p { margin: 6px 0 0; color: var(--ink-2); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line); background: var(--surface);
+    padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .btn:hover { border-color: var(--ink-2); }
+  .btn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn-primary:hover { opacity: .9; }
+  .btn-quiet { background: transparent; border-color: transparent; color: var(--ink-2); padding: 6px 10px; }
+  .btn-quiet:hover { color: var(--ink); border-color: var(--line); }
+  .btn-danger { color: var(--danger); }
+  .btn-small { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+
+  /* Hero: the 14-installment track */
+  .hero { background: var(--surface); border-radius: 20px; padding: 28px; box-shadow: var(--shadow); }
+  .hero-head { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: baseline; }
+  .hero-head h2 { font-size: clamp(20px, 2.6vw, 26px); font-weight: 700; letter-spacing: -0.01em; max-width: 34ch; }
+  .hero-head .progress { color: var(--ink-2); font-weight: 600; }
+  .hero-note { margin: 8px 0 0; color: var(--late); font-weight: 600; }
+  .track-scroll { overflow-x: auto; margin: 24px -4px 0; padding: 4px; }
+  .track { display: grid; grid-template-columns: repeat(var(--count, 14), minmax(40px, 1fr)); gap: 6px; min-width: 600px; }
+  .seg { all: unset; cursor: pointer; display: grid; gap: 6px; justify-items: center; border-radius: 8px; padding: 2px 0; }
+  .seg:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .seg-num { font-size: 12px; font-weight: 700; color: var(--ink-2); }
+  .seg-bar { position: relative; width: 100%; height: 64px; border-radius: 8px; background: var(--surface-2); border: 2px solid transparent; transition: transform .15s; }
+  .seg:hover .seg-bar { transform: translateY(-2px); }
+  .seg-month { font-size: 12px; color: var(--ink-2); line-height: 1.25; text-align: center; }
+  .seg-month b { display: block; font-weight: 700; color: var(--ink); }
+  .seg--sent .seg-bar { background: var(--php); }
+  .seg--spa .seg-bar { background: repeating-linear-gradient(135deg, var(--php) 0 6px, var(--php-soft) 6px 12px); }
+  .seg--overdue .seg-bar { background: var(--late-soft); border-color: var(--late); }
+  .seg--soon .seg-bar { border: 2px dashed var(--ink-2); }
+  .seg.is-next .seg-num { color: var(--ink); }
+  .seg.is-next .seg-bar { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--ink); }
+  .seg.is-late .seg-bar::after {
+    content: ""; position: absolute; top: -5px; right: -5px; width: 12px; height: 12px;
+    border-radius: 50%; background: var(--late); border: 2px solid var(--surface);
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 18px; font-size: 13px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .legend i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: var(--surface-2); border: 2px solid transparent; }
+  .legend .l-sent { background: var(--php); }
+  .legend .l-spa { background: repeating-linear-gradient(135deg, var(--php) 0 3px, var(--php-soft) 3px 6px); }
+  .legend .l-overdue { background: var(--late-soft); border-color: var(--late); }
+  .legend .l-late { border-radius: 50%; background: var(--late); width: 10px; height: 10px; }
+
+  /* Totals strip */
+  .totals { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 20px; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); }
+  .total { padding: 18px 20px; border-left: 1px solid var(--line); }
+  .total:first-child { border-left: 0; }
+  .total dt { font-size: 13px; color: var(--ink-2); font-weight: 600; }
+  .total dd { margin: 4px 0 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+  .total small { display: block; font-size: 12px; color: var(--ink-2); font-weight: 500; margin-top: 2px; }
+  .is-php { color: var(--php); }
+  .is-usd { color: var(--usd); }
+  .is-late-c { color: var(--late); }
+  @media (max-width: 900px) {
+    .totals { grid-template-columns: repeat(2, 1fr); }
+    .total { border-left: 0; border-top: 1px solid var(--line); }
+    .total:nth-child(-n+2) { border-top: 0; }
+    .total:nth-child(even) { border-left: 1px solid var(--line); }
+    .total:last-child { grid-column: 1 / -1; border-left: 0; }
+  }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin: 32px 0 16px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tab { all: unset; cursor: pointer; padding: 10px 14px; font-weight: 600; color: var(--ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .tab:focus-visible { outline: 2px solid var(--focus); border-radius: 6px; }
+  .panel[hidden] { display: none; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 12px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; font-weight: 700; color: var(--ink-2); background: var(--surface); position: sticky; top: 0; }
+  td.num, th.num { text-align: right; }
+  tbody tr:hover { background: var(--surface-2); }
+  tfoot td { font-weight: 800; border-bottom: 0; }
+  .muted { color: var(--ink-2); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--ink-2); }
+  .pill--sent { background: var(--php-soft); color: var(--php); }
+  .pill--spa { background: var(--usd-soft); color: var(--usd); }
+  .pill--overdue, .pill--late { background: var(--late-soft); color: var(--late); }
+  .pill--soon { background: var(--surface-2); color: var(--ink); }
+  .table-note { margin: 12px 4px 0; font-size: 13px; color: var(--ink-2); }
+
+  /* Settings */
+  .settings { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 800px) { .settings { grid-template-columns: 1fr; } }
+  .box { background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 22px; }
+  .box h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .box > p { margin: 0 0 16px; color: var(--ink-2); font-size: 14px; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .fields .wide { grid-column: 1 / -1; }
+  @media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+  label.field { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); font-weight: 500; font-size: 15px;
+  }
+  .field textarea { min-height: 70px; resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--focus); outline-offset: 0; border-color: transparent; }
+  .field .hint { font-weight: 500; font-size: 12px; color: var(--ink-2); }
+  .row-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .inline-link { all: unset; cursor: pointer; color: var(--usd); font-weight: 600; font-size: 12px; }
+  .inline-link:hover { text-decoration: underline; }
+
+  /* Dialog */
+  dialog {
+    width: min(640px, calc(100vw - 24px)); max-height: calc(100vh - 24px);
+    border: 0; border-radius: 20px; padding: 0; background: var(--surface); color: var(--ink);
+    box-shadow: 0 24px 64px rgba(0,0,0,.3);
+  }
+  dialog::backdrop { background: rgba(13, 19, 26, .55); }
+  .dlg-head { padding: 22px 24px 0; }
+  .dlg-head h3 { font-size: 20px; font-weight: 800; }
+  .dlg-head p { margin: 6px 0 0; color: var(--ink-2); font-size: 14px; }
+  .dlg-body { padding: 18px 24px; }
+  .dlg-group { margin-bottom: 18px; }
+  .dlg-group h4 { margin: 0 0 10px; font-size: 14px; font-weight: 700; }
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 8px; background: var(--bg); border-radius: 14px; padding: 14px; margin-bottom: 18px; }
+  .flow div { text-align: center; }
+  .flow span { display: block; font-size: 11px; color: var(--ink-2); font-weight: 600; }
+  .flow strong { font-size: 16px; font-weight: 800; }
+  .flow .arrow { color: var(--ink-2); font-size: 18px; }
+  @media (max-width: 520px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); justify-self: center; } }
+  .dlg-foot { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; padding: 16px 24px 22px; border-top: 1px solid var(--line); }
+  .dlg-foot .right { display: flex; gap: 10px; margin-left: auto; }
+  .error { color: var(--danger); font-size: 13px; font-weight: 600; margin: 0 0 12px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px);
+    background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 14px;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  footer { margin-top: 40px; font-size: 13px; color: var(--ink-2); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1 id="title">Payments to Uncle Tony</h1>
+      <p id="subtitle"></p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-record" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Record a payment
+      </button>
+      <button class="btn btn-primary" id="btn-export" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        Export to Excel
+      </button>
+    </div>
+  </header>
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-head">
+      <h2 id="hero-title"></h2>
+      <span class="progress" id="hero-progress"></span>
+    </div>
+    <p class="hero-note" id="hero-note" hidden></p>
+    <div class="track-scroll"><div class="track" id="track"></div></div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="l-sent"></i><span id="legend-sent">Sent to recipient</span></span>
+      <span><i class="l-spa"></i>With SPA, not yet sent</span>
+      <span><i class="l-late"></i>Paid late</span>
+      <span><i class="l-overdue"></i>Overdue</span>
+      <span><i></i>Upcoming</span>
+    </div>
+  </section>
+
+  <dl class="totals" id="totals"></dl>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button class="tab" role="tab" aria-selected="true" aria-controls="panel-ledger" id="tab-ledger">Payment ledger</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-fees" id="tab-fees">SPA service fees</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-schedule" id="tab-schedule">Amortization schedule</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="panel-settings" id="tab-settings">Settings and backup</button>
+  </nav>
+
+  <section class="panel" id="panel-ledger" role="tabpanel" aria-labelledby="tab-ledger">
+    <div class="table-wrap"><table id="ledger"></table></div>
+    <p class="table-note">Select any row to record or edit that month's payment.</p>
+  </section>
+
+  <section class="panel" id="panel-fees" role="tabpanel" aria-labelledby="tab-fees" hidden>
+    <div class="table-wrap"><table id="fees"></table></div>
+    <p class="table-note">A service fee is counted once a payment has been converted to USD.</p>
+  </section>
+
+  <section class="panel" id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule" hidden>
+    <div class="table-wrap"><table id="schedule"></table></div>
+    <p class="table-note" id="schedule-note"></p>
+  </section>
+
+  <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <div class="settings">
+      <form class="box" id="settings-form" novalidate>
+        <h3>Payment terms</h3>
+        <p>These drive the due dates, penalties, and amortization schedule.</p>
+        <div class="fields">
+          <label class="field">Principal (PHP)<input type="number" step="0.01" min="0" id="s-principal" required></label>
+          <label class="field">Annual interest rate (%)<input type="number" step="0.001" min="0" id="s-rate" required><span class="hint">Compounded monthly</span></label>
+          <label class="field">Number of months<input type="number" step="1" min="1" max="120" id="s-months" required></label>
+          <label class="field">Monthly installment (PHP)<input type="number" step="0.01" min="0" id="s-payment" required>
+            <button type="button" class="inline-link" id="s-calc">Recalculate from terms</button></label>
+          <label class="field">First due month<input type="month" id="s-first" required><span class="hint">Each installment is due on the last day of its month</span></label>
+          <label class="field">SPA service fee (USD)<input type="number" step="0.01" min="0" id="s-fee" required><span class="hint">Deducted from each remittance</span></label>
+          <label class="field">Late penalty (%)<input type="number" step="0.01" min="0" id="s-penalty" required></label>
+          <label class="field">Penalty is charged
+            <select id="s-mode">
+              <option value="once">Once per late installment</option>
+              <option value="monthly">For every 30 days late</option>
+            </select></label>
+          <label class="field">Grace period (days)<input type="number" step="1" min="0" id="s-grace" required></label>
+          <label class="field">Recipient name<input type="text" id="s-recipient" required></label>
+        </div>
+        <p class="error" id="settings-error" hidden></p>
+        <div class="row-actions"><button class="btn btn-primary" type="submit">Save settings</button></div>
+      </form>
+
+      <div class="box">
+        <h3>Backup and restore</h3>
+        <p>Your records are saved in this browser only. Download a backup regularly, and restore it to move your records to another computer or phone.</p>
+        <div class="row-actions">
+          <button class="btn" type="button" id="btn-backup">Download backup</button>
+          <button class="btn" type="button" id="btn-restore">Restore from backup</button>
+          <input type="file" id="restore-file" accept="application/json,.json" hidden>
+        </div>
+        <div class="row-actions" style="margin-top:28px">
+          <button class="btn btn-danger" type="button" id="btn-reset">Erase all records</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Amounts in USD are rounded to the cent. Records stay on this device unless you download a backup.</footer>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <form id="pay-form" novalidate>
+    <div class="dlg-head">
+      <h3 id="dlg-title"></h3>
+      <p id="dlg-sub"></p>
+    </div>
+    <div class="dlg-body">
+      <div class="flow" aria-live="polite">
+        <div><span>From buyer</span><strong class="is-php" id="pv-php">—</strong></div>
+        <div class="arrow">→</div>
+        <div><span>Converted</span><strong class="is-usd" id="pv-usd">—</strong></div>
+        <div class="arrow">→</div>
+        <div><span id="pv-net-label">To recipient</span><strong id="pv-net">—</strong></div>
+      </div>
+
+      <div class="dlg-group">
+        <h4>Buyer to SPA</h4>
+        <div class="fields">
+          <label class="field">Date buyer paid<input type="date" id="f-received"></label>
+          <label class="field">Penalty (PHP)<input type="number" step="0.01" min="0" id="f-penalty"><span class="hint" id="f-penalty-hint"></span></label>
+          <label class="field wide">Amount received (PHP)<input type="number" step="0.01" min="0" id="f-amount">
+            <button type="button" class="inline-link" id="f-fill">Use expected amount</button></label>
+        </div>
+      </div>
+
+      <div class="dlg-group">
+        <h4>SPA conversion and remittance</h4>
+        <div class="fields">
+          <label class="field">Conversion date<input type="date" id="f-conv"></label>
+          <label class="field">BPI rate (PHP per USD)<input type="number" step="0.0001" min="0" id="f-rate" placeholder="e.g. 57.85"></label>
+          <label class="field">SPA service fee (USD)<input type="number" step="0.01" min="0" id="f-fee"></label>
+          <label class="field"><span id="f-sent-label">Date sent to recipient</span><input type="date" id="f-sent"></label>
+          <label class="field wide">Reference or transaction number<input type="text" id="f-ref" autocomplete="off"></label>
+          <label class="field wide">Notes<textarea id="f-notes"></textarea></label>
+        </div>
+      </div>
+      <p class="error" id="pay-error" hidden></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn btn-quiet btn-danger" id="f-clear">Clear this record</button>
+      <div class="right">
+        <button type="button" class="btn" id="f-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save payment</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const STORE_KEY = 'uncle-tony-payments-v1';
+  const DEFAULT_SETTINGS = {
+    principal: 4950000,
+    annualRate: 6.5,
+    months: 14,
+    payment: 368103.37,
+    firstDueMonth: defaultFirstMonth(),
+    spaFee: 200,
+    penaltyPct: 2,
+    penaltyMode: 'once',
+    graceDays: 0,
+    recipient: 'Uncle Tony'
+  };
+
+  function defaultFirstMonth() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  let state = load();
+  let currentN = null;
+
+  // ---------- storage ----------
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        return { settings: { ...DEFAULT_SETTINGS, ...(p.settings || {}) }, records: p.records || {} };
+      }
+    } catch (e) { /* fall through to defaults */ }
+    return { settings: { ...DEFAULT_SETTINGS }, records: {} };
+  }
+  function persist() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (e) { toast('This browser blocked saving. Download a backup to keep your records.'); }
+  }
+
+  // ---------- helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+  const pesoFmt = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+  const usdFmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const fmtPHP = (n) => (n == null || isNaN(n)) ? '—' : pesoFmt.format(n);
+  const fmtUSD = (n) => (n == null || isNaN(n)) ? '—' : usdFmt.format(n);
+  const hasVal = (v) => v !== undefined && v !== null && v !== '';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function parseISO(s) { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); }
+  function daysBetween(a, b) { return Math.round((parseISO(b) - parseISO(a)) / 864e5); }
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(parseISO(iso)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  }
+  function firstYM() { return state.settings.firstDueMonth.split('-').map(Number); }
+  function dueDate(i) {
+    const [y, m] = firstYM();
+    return new Date(Date.UTC(y, m - 1 + i + 1, 0)).toISOString().slice(0, 10);
+  }
+  function monthDate(i) { const [y, m] = firstYM(); return new Date(Date.UTC(y, m - 1 + i, 1)); }
+  function monthLong(i) { return monthDate(i).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }); }
+  function monthShort(i) { return monthDate(i).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }); }
+  function yearOf(i) { return monthDate(i).getUTCFullYear(); }
+
+  // ---------- calculations ----------
+  function calcPayment(P, annualRate, n) {
+    const r = annualRate / 100 / 12;
+    if (r === 0) return round2(P / n);
+    return round2(P * r / (1 - Math.pow(1 + r, -n)));
+  }
+
+  function autoPenalty(i, onDate) {
+    const s = state.settings;
+    if (!onDate) return 0;
+    const late = daysBetween(dueDate(i), onDate);
+    if (late <= Number(s.graceDays || 0)) return 0;
+    const units = s.penaltyMode === 'monthly' ? Math.ceil(late / 30) : 1;
+    return round2(Number(s.payment) * Number(s.penaltyPct) / 100 * units);
+  }
+
+  function computeRow(i) {
+    const s = state.settings;
+    const n = i + 1;
+    const rec = state.records[n] || {};
+    const due = dueDate(i);
+    const amountDue = Number(s.payment);
+    const received = rec.receivedDate || '';
+    const grace = Number(s.graceDays || 0);
+    const diff = received ? daysBetween(due, received) : null;
+    const daysLate = received ? Math.max(0, diff) : null;
+    const isLate = received ? diff > grace : false;
+    const penalty = received ? (hasVal(rec.penalty) ? Number(rec.penalty) : autoPenalty(i, received)) : 0;
+    const amountPHP = hasVal(rec.amountPHP) ? Number(rec.amountPHP) : null;
+    const rate = hasVal(rec.rate) && Number(rec.rate) > 0 ? Number(rec.rate) : null;
+    const usd = amountPHP != null && rate ? round2(amountPHP / rate) : null;
+    const fee = usd != null ? Number(hasVal(rec.spaFee) ? rec.spaFee : s.spaFee) : 0;
+    const net = usd != null ? round2(usd - fee) : null;
+    const t = todayISO();
+    let status;
+    if (rec.sentDate) status = 'sent';
+    else if (received) status = 'spa';
+    else if (daysBetween(due, t) > grace) status = 'overdue';
+    else if (daysBetween(t, due) <= 7) status = 'soon';
+    else status = 'upcoming';
+    const accruing = status === 'overdue' ? autoPenalty(i, t) : 0;
+    return {
+      n, i, due, amountDue, received, daysLate, isLate, penalty, amountPHP, rate, usd, fee, net,
+      convDate: rec.convDate || '', sentDate: rec.sentDate || '', ref: rec.ref || '', notes: rec.notes || '',
+      status, accruing
+    };
+  }
+  function allRows() {
+    const out = [];
+    for (let i = 0; i < Number(state.settings.months); i++) out.push(computeRow(i));
+    return out;
+  }
+
+  function schedule() {
+    const s = state.settings;
+    const r = Number(s.annualRate) / 100 / 12;
+    const n = Number(s.months);
+    let b = Number(s.principal);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const interest = b * r;
+      const principal = Number(s.payment) - interest;
+      let end = b - principal;
+      if (i === n - 1 && Math.abs(end) < 1) end = 0;
+      out.push({ n: i + 1, i, due: dueDate(i), begin: b, payment: Number(s.payment), interest, principal, end });
+      b = end;
+    }
+    return out;
+  }
+
+  function statusText(r) {
+    const name = state.settings.recipient;
+    return {
+      sent: `Sent to ${name}`,
+      spa: 'With SPA',
+      overdue: 'Overdue',
+      soon: 'Due soon',
+      upcoming: 'Upcoming'
+    }[r.status];
+  }
+
+  function totals(rows) {
+    const sum = (f) => round2(rows.reduce((a, r) => a + (f(r) || 0), 0));
+    const received = rows.filter((r) => r.received);
+    const sched = schedule();
+    const balance = received.length ? sched[Math.min(received.length, sched.length) - 1].end : Number(state.settings.principal);
+    return {
+      receivedCount: received.length,
+      sentCount: rows.filter((r) => r.status === 'sent').length,
+      collected: sum((r) => r.amountPHP),
+      penalties: sum((r) => r.penalty),
+      usd: sum((r) => r.usd),
+      fees: sum((r) => r.fee),
+      net: sum((r) => r.net),
+      netSent: sum((r) => r.status === 'sent' ? r.net : 0),
+      netPending: sum((r) => r.status === 'spa' ? r.net : 0),
+      balance: Math.max(0, balance)
+    };
+  }
+
+  // ---------- rendering ----------
+  function renderAll() {
+    const rows = allRows();
+    const t = totals(rows);
+    renderHeader();
+    renderHero(rows, t);
+    renderTotals(t);
+    renderLedger(rows, t);
+    renderFees(rows, t);
+    renderSchedule(rows);
+  }
+
+  function renderHeader() {
+    const s = state.settings;
+    $('title').textContent = `Payments to ${s.recipient}`;
+    $('subtitle').textContent = `${fmtPHP(Number(s.principal))} over ${s.months} months at ${s.annualRate}% interest, ${fmtPHP(Number(s.payment))} due at the end of each month`;
+    $('pv-net-label').textContent = `To ${s.recipient}`;
+    $('legend-sent').textContent = `Sent to ${s.recipient}`;
+    $('f-sent-label').textContent = `Date sent to ${s.recipient}`;
+    document.title = `Payments to ${s.recipient}`;
+  }
+
+  function renderHero(rows, t) {
+    const s = state.settings;
+    const next = rows.find((r) => !r.received);
+    const unsent = rows.filter((r) => r.status === 'spa').length;
+    const note = $('hero-note');
+    note.hidden = true;
+    if (!next && !unsent) {
+      $('hero-title').textContent = `All ${rows.length} installments are paid and sent to ${s.recipient}.`;
+    } else if (!next) {
+      $('hero-title').textContent = `The buyer has paid every installment. ${unsent} still ${unsent === 1 ? 'needs' : 'need'} to be sent to ${s.recipient}.`;
+    } else {
+      $('hero-title').textContent = `Next up is installment ${next.n}: ${fmtPHP(next.amountDue)} due ${fmtDate(next.due)}`;
+      if (next.status === 'overdue') {
+        const late = daysBetween(next.due, todayISO());
+        note.textContent = `It is ${late} ${late === 1 ? 'day' : 'days'} overdue. The late penalty is now ${fmtPHP(next.accruing)}.`;
+        note.hidden = false;
+      }
+    }
+    $('hero-progress').textContent = `${t.receivedCount} of ${rows.length} received, ${t.sentCount} sent`;
+
+    const track = $('track');
+    track.style.setProperty('--count', rows.length);
+    track.innerHTML = rows.map((r) => {
+      const showYear = r.i === 0 || monthDate(r.i).getUTCMonth() === 0;
+      const cls = ['seg', `seg--${r.status}`, r.isLate ? 'is-late' : '', next && r.n === next.n ? 'is-next' : ''].join(' ');
+      const label = `Installment ${r.n}, ${monthLong(r.i)}: ${statusText(r)}${r.isLate ? ', paid late' : ''}`;
+      return `<button type="button" class="${cls}" data-n="${r.n}" aria-label="${esc(label)}" title="${esc(label)}">
+        <span class="seg-num">${r.n}</span><span class="seg-bar"></span>
+        <span class="seg-month"><b>${monthShort(r.i)}</b>${showYear ? yearOf(r.i) : '&nbsp;'}</span></button>`;
+    }).join('');
+  }
+
+  function renderTotals(t) {
+    const s = state.settings;
+    $('totals').innerHTML = `
+      <div class="total"><dt>Collected from buyer</dt><dd class="is-php">${fmtPHP(t.collected)}</dd><small>${t.receivedCount} installment${t.receivedCount === 1 ? '' : 's'}</small></div>
+      <div class="total"><dt>Sent to ${esc(s.recipient)}</dt><dd class="is-usd">${fmtUSD(t.netSent)}</dd><small>${t.netPending ? `${fmtUSD(t.netPending)} more is with the SPA` : `From ${t.sentCount} remittance${t.sentCount === 1 ? '' : 's'}`}</small></div>
+      <div class="total"><dt>SPA service fees</dt><dd>${fmtUSD(t.fees)}</dd><small>${fmtUSD(Number(s.spaFee))} per remittance</small></div>
+      <div class="total"><dt>Late penalties</dt><dd class="${t.penalties ? 'is-late-c' : ''}">${fmtPHP(t.penalties)}</dd><small>${s.penaltyPct}% of the installment</small></div>
+      <div class="total"><dt>Principal balance</dt><dd>${fmtPHP(t.balance)}</dd><small>After ${t.receivedCount} of ${s.months} installments</small></div>`;
+  }
+
+  function pill(r) {
+    let html = `<span class="pill pill--${r.status}">${esc(statusText(r))}</span>`;
+    if (r.isLate) html += ` <span class="pill pill--late">Late ${r.daysLate}d</span>`;
+    return html;
+  }
+
+  function renderLedger(rows, t) {
+    $('ledger').innerHTML = `
+      <thead><tr>
+        <th>No.</th><th>Month</th><th>Due</th><th class="num">Amount due</th><th>Buyer paid</th>
+        <th class="num">Penalty</th><th class="num">Received (PHP)</th><th class="num">BPI rate</th>
+        <th class="num">Converted (USD)</th><th class="num">SPA fee</th><th class="num">Net to recipient (USD)</th>
+        <th>Sent on</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>${rows.map((r) => `
+        <tr data-n="${r.n}">
+          <td>${r.n}</td><td>${monthLong(r.i)}</td><td>${fmtDate(r.due)}</td>
+          <td class="num">${fmtPHP(r.amountDue)}</td>
+          <td>${r.received ? fmtDate(r.received) : '<span class="muted">—</span>'}</td>
+          <td class="num ${r.penalty ? 'is-late-c' : 'muted'}">${r.received ? fmtPHP(r.penalty) : (r.accruing ? `<span class="is-late-c">${fmtPHP(r.accruing)} so far</span>` : '—')}</td>
+          <td class="num is-php">${fmtPHP(r.amountPHP)}</td>
+          <td class="num">${r.rate ? r.rate.toFixed(4) : '—'}</td>
+          <td class="num is-usd">${fmtUSD(r.usd)}</td>
+          <td class="num">${r.usd != null ? fmtUSD(r.fee) : '—'}</td>
+          <td class="num"><strong>${fmtUSD(r.net)}</strong></td>
+          <td>${r.sentDate ? fmtDate(r.sentDate) : '<span class="muted">—</span>'}</td>
+          <td>${pill(r)}</td>
+          <td><button type="button" class="btn btn-small" data-n="${r.n}">${r.received ? 'Edit' : 'Record'}</button></td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td></td><td>Total</td><td></td><td class="num">${fmtPHP(rows.reduce((a, r) => a + r.amountDue, 0))}</td><td></td>
+        <td class="num">${fmtPHP(t.penalties)}</td><td class="num">${fmtPHP(t.collected)}</td><td></td>
+        <td class="num">${fmtUSD(t.usd)}</td><td class="num">${fmtUSD(t.fees)}</td><td class="num">${fmtUSD(t.net)}</td>
+        <td colspan="3"></td>
+      </tr></tfoot>`;
+  }
+
+  function renderFees(rows, t) {
+    const feeRows = rows.filter((r) => r.usd != null);
+    let running = 0;
+    $('fees').innerHTML = `
+      <thead><tr><th>No.</th><th>Month</th><th>Converted on</th><th>Sent on</th><th class="num">BPI rate</th>
+      <th class="num">Service fee (USD)</th><th class="num">Fee in PHP</th><th class="num">Running total (USD)</th></tr></thead>
+      <tbody>${feeRows.length ? feeRows.map((r) => {
+        running = round2(running + r.fee);
+        return `<tr data-n="${r.n}"><td>${r.n}</td><td>${monthLong(r.i)}</td><td>${fmtDate(r.convDate)}</td><td>${fmtDate(r.sentDate)}</td>
+          <td class="num">${r.rate.toFixed(4)}</td><td class="num">${fmtUSD(r.fee)}</td>
+          <td class="num">${fmtPHP(round2(r.fee * r.rate))}</td><td class="num">${fmtUSD(running)}</td></tr>`;
+      }).join('') : `<tr><td colspan="8" class="muted">No conversions yet. Record a payment with a BPI rate to see its service fee here.</td></tr>`}
+      </tbody>
+      <tfoot><tr><td></td><td>Total</td><td></td><td></td><td></td><td class="num">${fmtUSD(t.fees)}</td>
+      <td class="num">${fmtPHP(round2(feeRows.reduce((a, r) => a + r.fee * r.rate, 0)))}</td><td></td></tr></tfoot>`;
+  }
+
+  function renderSchedule(rows) {
+    const sched = schedule();
+    const totInt = sched.reduce((a, r) => a + r.interest, 0);
+    $('schedule').innerHTML = `
+      <thead><tr><th>No.</th><th>Month</th><th>Due</th><th class="num">Beginning balance</th><th class="num">Installment</th>
+      <th class="num">Interest</th><th class="num">Principal</th><th class="num">Ending balance</th><th>Status</th></tr></thead>
+      <tbody>${sched.map((r) => `<tr data-n="${r.n}"><td>${r.n}</td><td>${monthLong(r.i)}</td><td>${fmtDate(r.due)}</td>
+        <td class="num">${fmtPHP(r.begin)}</td><td class="num">${fmtPHP(r.payment)}</td><td class="num">${fmtPHP(r.interest)}</td>
+        <td class="num">${fmtPHP(r.principal)}</td><td class="num">${fmtPHP(r.end)}</td><td>${pill(rows[r.i])}</td></tr>`).join('')}
+      </tbody>
+      <tfoot><tr><td></td><td>Total</td><td></td><td></td><td class="num">${fmtPHP(sched.reduce((a, r) => a + r.payment, 0))}</td>
+      <td class="num">${fmtPHP(totInt)}</td><td class="num">${fmtPHP(sched.reduce((a, r) => a + r.principal, 0))}</td><td></td><td></td></tr></tfoot>`;
+    const expected = calcPayment(Number(state.settings.principal), Number(state.settings.annualRate), Number(state.settings.months));
+    $('schedule-note').textContent = Math.abs(expected - Number(state.settings.payment)) < 0.02
+      ? `The installment matches ${state.settings.annualRate}% compounded monthly over ${state.settings.months} months. Total interest is ${fmtPHP(totInt)}.`
+      : `Heads up: these terms work out to ${fmtPHP(expected)} a month, not ${fmtPHP(Number(state.settings.payment))}. Check the installment in Settings.`;
+  }
+
+  // ---------- payment dialog ----------
+  const dlg = $('dlg');
+  const F = {
+    received: $('f-received'), penalty: $('f-penalty'), amount: $('f-amount'), conv: $('f-conv'),
+    rate: $('f-rate'), fee: $('f-fee'), sent: $('f-sent'), ref: $('f-ref'), notes: $('f-notes')
+  };
+
+  function openPayment(n) {
+    currentN = n;
+    const i = n - 1;
+    const s = state.settings;
+    const rec = state.records[n] || {};
+    $('dlg-title').textContent = `Installment ${n} of ${s.months}: ${monthLong(i)}`;
+    $('dlg-sub').textContent = `${fmtPHP(Number(s.payment))} due ${fmtDate(dueDate(i))}`;
+    F.received.value = rec.receivedDate || '';
+    F.penalty.value = hasVal(rec.penalty) ? rec.penalty : '';
+    F.amount.value = hasVal(rec.amountPHP) ? rec.amountPHP : '';
+    F.conv.value = rec.convDate || '';
+    F.rate.value = hasVal(rec.rate) ? rec.rate : '';
+    F.fee.value = hasVal(rec.spaFee) ? rec.spaFee : s.spaFee;
+    F.sent.value = rec.sentDate || '';
+    F.ref.value = rec.ref || '';
+    F.notes.value = rec.notes || '';
+    F.penalty.dataset.touched = hasVal(rec.penalty) ? '1' : '';
+    F.amount.dataset.touched = hasVal(rec.amountPHP) ? '1' : '';
+    F.conv.dataset.touched = rec.convDate ? '1' : '';
+    $('f-clear').hidden = !state.records[n];
+    $('pay-error').hidden = true;
+    syncAuto();
+    updatePreview();
+    dlg.showModal();
+  }
+
+  function expectedAmount() {
+    return round2(Number(state.settings.payment) + (Number(F.penalty.value) || 0));
+  }
+
+  function syncAuto() {
+    const i = currentN - 1;
+    const auto = autoPenalty(i, F.received.value);
+    const s = state.settings;
+    if (!F.penalty.dataset.touched) F.penalty.value = F.received.value ? auto.toFixed(2) : '';
+    if (!F.received.value) {
+      $('f-penalty-hint').textContent = 'Fills in once you enter the payment date';
+    } else {
+      const late = daysBetween(dueDate(i), F.received.value);
+      $('f-penalty-hint').textContent = late > Number(s.graceDays || 0)
+        ? `${late} days late. Auto penalty is ${fmtPHP(auto)}`
+        : 'Paid on time, no penalty';
+    }
+    if (!F.amount.dataset.touched && F.received.value) F.amount.value = expectedAmount().toFixed(2);
+    if (!F.conv.dataset.touched && F.received.value) F.conv.value = F.received.value;
+  }
+
+  function updatePreview() {
+    const php = Number(F.amount.value) || 0;
+    const rate = Number(F.rate.value) || 0;
+    const fee = Number(F.fee.value) || 0;
+    $('pv-php').textContent = php ? fmtPHP(php) : '—';
+    const usd = php && rate ? round2(php / rate) : null;
+    $('pv-usd').textContent = usd != null ? fmtUSD(usd) : '—';
+    $('pv-net').textContent = usd != null ? fmtUSD(round2(usd - fee)) : '—';
+  }
+
+  F.received.addEventListener('change', () => { syncAuto(); updatePreview(); });
+  F.penalty.addEventListener('input', () => {
+    F.penalty.dataset.touched = F.penalty.value === '' ? '' : '1';
+    if (!F.amount.dataset.touched && F.received.value) F.amount.value = expectedAmount().toFixed(2);
+    updatePreview();
+  });
+  F.amount.addEventListener('input', () => { F.amount.dataset.touched = F.amount.value === '' ? '' : '1'; updatePreview(); });
+  F.conv.addEventListener('input', () => { F.conv.dataset.touched = F.conv.value ? '1' : ''; });
+  [F.rate, F.fee].forEach((el) => el.addEventListener('input', updatePreview));
+  $('f-fill').addEventListener('click', () => { F.amount.value = expectedAmount().toFixed(2); F.amount.dataset.touched = ''; updatePreview(); });
+  $('f-cancel').addEventListener('click', () => dlg.close());
+
+  $('pay-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const err = $('pay-error');
+    const fail = (msg) => { err.textContent = msg; err.hidden = false; };
+    if (!F.received.value && (F.amount.value || F.sent.value || F.rate.value)) return fail('Add the date the buyer paid first.');
+    if (F.received.value && !F.amount.value) return fail('Enter the amount received in pesos.');
+    if (F.sent.value && F.received.value && F.sent.value < F.received.value) return fail('The send date is before the date the buyer paid. Check both dates.');
+    if (F.sent.value && !F.rate.value) return fail('Enter the BPI rate used, so the USD amount sent can be calculated.');
+    if (!F.received.value) { dlg.close(); return; }
+    state.records[currentN] = {
+      receivedDate: F.received.value,
+      penalty: F.penalty.dataset.touched ? Number(F.penalty.value) : '',
+      amountPHP: Number(F.amount.value),
+      convDate: F.conv.value,
+      rate: F.rate.value ? Number(F.rate.value) : '',
+      spaFee: F.fee.value === '' ? '' : Number(F.fee.value),
+      sentDate: F.sent.value,
+      ref: F.ref.value.trim(),
+      notes: F.notes.value.trim()
+    };
+    persist();
+    renderAll();
+    dlg.close();
+    toast(`Installment ${currentN} saved.`);
+  });
+
+  $('f-clear').addEventListener('click', () => {
+    if (!confirm(`Clear everything recorded for installment ${currentN}?`)) return;
+    delete state.records[currentN];
+    persist();
+    renderAll();
+    dlg.close();
+    toast(`Installment ${currentN} cleared.`);
+  });
+
+  // Open dialog from track, ledger rows, buttons
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-n]');
+    if (!target || !document.body.contains(target)) return;
+    if (target.closest('#track, #ledger, #fees, #schedule')) openPayment(Number(target.dataset.n));
+  });
+  $('btn-record').addEventListener('click', () => {
+    const rows = allRows();
+    const next = rows.find((r) => !r.received) || rows.find((r) => r.status === 'spa') || rows[rows.length - 1];
+    openPayment(next.n);
+  });
+
+  // ---------- tabs ----------
+  const tabs = ['ledger', 'fees', 'schedule', 'settings'];
+  tabs.forEach((name, idx) => {
+    $(`tab-${name}`).addEventListener('click', () => selectTab(name));
+    $(`tab-${name}`).addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const next = tabs[(idx + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+      selectTab(next); $(`tab-${next}`).focus();
+    });
+  });
+  function selectTab(name) {
+    tabs.forEach((t) => {
+      $(`tab-${t}`).setAttribute('aria-selected', String(t === name));
+      $(`tab-${t}`).tabIndex = t === name ? 0 : -1;
+      $(`panel-${t}`).hidden = t !== name;
+    });
+  }
+
+  // ---------- settings ----------
+  const S = {
+    principal: $('s-principal'), annualRate: $('s-rate'), months: $('s-months'), payment: $('s-payment'),
+    firstDueMonth: $('s-first'), spaFee: $('s-fee'), penaltyPct: $('s-penalty'), penaltyMode: $('s-mode'),
+    graceDays: $('s-grace'), recipient: $('s-recipient')
+  };
+  function fillSettings() { Object.entries(S).forEach(([k, el]) => { el.value = state.settings[k]; }); }
+  $('s-calc').addEventListener('click', () => {
+    const v = calcPayment(Number(S.principal.value), Number(S.annualRate.value), Number(S.months.value));
+    if (isFinite(v)) S.payment.value = v.toFixed(2);
+  });
+  $('settings-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const err = $('settings-error');
+    const next = {};
+    for (const [k, el] of Object.entries(S)) {
+      if (el.value === '') { err.textContent = 'Fill in every field before saving.'; err.hidden = false; el.focus(); return; }
+      next[k] = (el.type === 'number') ? Number(el.value) : el.value.trim();
+    }
+    if (!Number.isInteger(next.months) || next.months < 1) { err.textContent = 'Number of months must be a whole number.'; err.hidden = false; return; }
+    err.hidden = true;
+    state.settings = { ...state.settings, ...next };
+    persist();
+    renderAll();
+    toast('Settings saved.');
+  });
+
+  // ---------- backup ----------
+  function download(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  $('btn-backup').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ app: 'uncle-tony-payments', version: 1, exported: new Date().toISOString(), ...state }, null, 2)], { type: 'application/json' });
+    download(blob, `payments-backup-${todayISO()}.json`);
+    toast('Backup downloaded.');
+  });
+  $('btn-restore').addEventListener('click', () => $('restore-file').click());
+  $('restore-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (!data || typeof data.settings !== 'object' || typeof data.records !== 'object') throw new Error('shape');
+      if (!confirm('Replace the records in this browser with the backup?')) return;
+      state = { settings: { ...DEFAULT_SETTINGS, ...data.settings }, records: data.records };
+      persist(); fillSettings(); renderAll();
+      toast('Backup restored.');
+    } catch (err) {
+      toast('That file is not a backup from this app. Choose a .json file made with Download backup.');
+    }
+  });
+  $('btn-reset').addEventListener('click', () => {
+    if (!confirm('Erase every recorded payment and reset the settings? Download a backup first if you might need them.')) return;
+    state = { settings: { ...DEFAULT_SETTINGS }, records: {} };
+    persist(); fillSettings(); renderAll();
+    toast('All records erased.');
+  });
+
+  // ---------- Excel export ----------
+  const XL_PHP = '"₱"#,##0.00';
+  const XL_USD = '"$"#,##0.00';
+  const XL_RATE = '0.0000';
+  const XL_DATE = 'mmm d, yyyy';
+  const serial = (iso) => (parseISO(iso) - Date.UTC(1899, 11, 30)) / 864e5;
+  const C = {
+    s: (v) => ({ t: 's', v: v == null ? '' : String(v) }),
+    n: (v, z) => (v == null || v === '' || isNaN(v)) ? { t: 's', v: '' } : { t: 'n', v: Number(v), z },
+    d: (iso) => iso ? { t: 'n', v: serial(iso), z: XL_DATE } : { t: 's', v: '' },
+    f: (f, v, z) => (typeof v === 'number' ? { t: 'n', f, v, z } : { t: 's', f, v: '' })
+  };
+  function makeSheet(rows, widths) {
+    const ws = {};
+    let maxC = 0;
+    rows.forEach((row, r) => row.forEach((c, ci) => {
+      if (c == null) return;
+      const cell = typeof c === 'object' ? c : (typeof c === 'number' ? { t: 'n', v: c } : { t: 's', v: String(c) });
+      ws[XLSX.utils.encode_cell({ r, c: ci })] = cell;
+      if (ci > maxC) maxC = ci;
+    }));
+    ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(rows.length - 1, 0), c: maxC } });
+    if (widths) ws['!cols'] = widths.map((w) => ({ wch: w }));
+    return ws;
+  }
+
+  function exportExcel() {
+    if (typeof XLSX === 'undefined') {
+      toast('The Excel tool did not load. Check your internet connection and reload the page.');
+      return;
+    }
+    const s = state.settings;
+    const rows = allRows();
+    const t = totals(rows);
+    const sched = schedule();
+    const name = s.recipient;
+
+    // Payment ledger
+    const ledger = [[
+      'No.', 'Month', 'Due date', 'Amount due (PHP)', 'Date buyer paid', 'Days late', 'Penalty (PHP)',
+      'Amount received (PHP)', 'Conversion date', 'BPI rate (PHP/USD)', 'Converted (USD)', 'SPA service fee (USD)',
+      `Net to ${name} (USD)`, `Date sent to ${name}`, 'Reference no.', 'Status', 'Notes'
+    ]];
+    rows.forEach((r, k) => {
+      const x = k + 2;
+      ledger.push([
+        C.n(r.n), C.s(monthLong(r.i)), C.d(r.due), C.n(r.amountDue, XL_PHP), C.d(r.received),
+        r.received ? C.n(r.daysLate) : C.s(''), r.received ? C.n(r.penalty, XL_PHP) : C.s(''),
+        C.n(r.amountPHP, XL_PHP), C.d(r.convDate), C.n(r.rate, XL_RATE),
+        C.f(`IF(AND(ISNUMBER(H${x}),N(J${x})>0),ROUND(H${x}/J${x},2),"")`, r.usd, XL_USD),
+        r.usd != null ? C.n(r.fee, XL_USD) : C.s(''),
+        C.f(`IF(ISNUMBER(K${x}),K${x}-N(L${x}),"")`, r.net, XL_USD),
+        C.d(r.sentDate), C.s(r.ref), C.s(statusText(r) + (r.isLate ? ' (paid late)' : '')), C.s(r.notes)
+      ]);
+    });
+    const last = rows.length + 1;
+    const tot = rows.length + 2;
+    const sumCol = (col, v, z) => C.f(`SUM(${col}2:${col}${last})`, v, z);
+    ledger.push([
+      C.s(''), C.s('Total'), C.s(''), sumCol('D', rows.reduce((a, r) => a + r.amountDue, 0), XL_PHP), C.s(''), C.s(''),
+      sumCol('G', t.penalties, XL_PHP), sumCol('H', t.collected, XL_PHP), C.s(''), C.s(''),
+      sumCol('K', t.usd, XL_USD), sumCol('L', t.fees, XL_USD), sumCol('M', t.net, XL_USD)
+    ]);
+    const wsLedger = makeSheet(ledger, [5, 16, 13, 17, 15, 9, 14, 20, 15, 16, 15, 19, 20, 20, 18, 22, 30]);
+    wsLedger['!autofilter'] = { ref: `A1:Q${last}` };
+
+    // SPA service fees
+    const feeRows = rows.filter((r) => r.usd != null);
+    const fees = [['No.', 'Month', 'Conversion date', `Date sent to ${name}`, 'Service fee (USD)', 'BPI rate (PHP/USD)', 'Fee in PHP', 'Running total (USD)']];
+    let running = 0;
+    feeRows.forEach((r, k) => {
+      const x = k + 2;
+      running = round2(running + r.fee);
+      fees.push([
+        C.n(r.n), C.s(monthLong(r.i)), C.d(r.convDate), C.d(r.sentDate), C.n(r.fee, XL_USD), C.n(r.rate, XL_RATE),
+        C.f(`ROUND(E${x}*F${x},2)`, round2(r.fee * r.rate), XL_PHP), C.f(`SUM($E$2:E${x})`, running, XL_USD)
+      ]);
+    });
+    if (feeRows.length) {
+      const fl = feeRows.length + 1;
+      fees.push([C.s(''), C.s('Total'), C.s(''), C.s(''), C.f(`SUM(E2:E${fl})`, t.fees, XL_USD), C.s(''),
+        C.f(`SUM(G2:G${fl})`, round2(feeRows.reduce((a, r) => a + round2(r.fee * r.rate), 0)), XL_PHP)]);
+    } else {
+      fees.push([C.s(''), C.s('No conversions recorded yet')]);
+    }
+    const wsFees = makeSheet(fees, [5, 16, 16, 20, 17, 18, 15, 19]);
+
+    // Amortization
+    const am = [['No.', 'Month', 'Due date', 'Beginning balance', 'Installment', 'Interest', 'Principal', 'Ending balance', 'Status']];
+    sched.forEach((r) => am.push([
+      C.n(r.n), C.s(monthLong(r.i)), C.d(r.due), C.n(round2(r.begin), XL_PHP), C.n(r.payment, XL_PHP),
+      C.n(round2(r.interest), XL_PHP), C.n(round2(r.principal), XL_PHP), C.n(round2(r.end), XL_PHP), C.s(statusText(rows[r.i]))
+    ]));
+    const al = sched.length + 1;
+    am.push([C.s(''), C.s('Total'), C.s(''), C.s(''),
+      C.f(`SUM(E2:E${al})`, round2(sched.reduce((a, r) => a + r.payment, 0)), XL_PHP),
+      C.f(`SUM(F2:F${al})`, round2(sched.reduce((a, r) => a + r.interest, 0)), XL_PHP),
+      C.f(`SUM(G2:G${al})`, round2(sched.reduce((a, r) => a + r.principal, 0)), XL_PHP)]);
+    const wsAm = makeSheet(am, [5, 16, 13, 18, 15, 14, 15, 17, 22]);
+
+    // Summary
+    const ref = (col) => `'Payment Ledger'!${col}${tot}`;
+    const summary = [
+      [C.s(`Payments to ${name}`)],
+      [C.s('Exported'), C.d(todayISO())],
+      [],
+      [C.s('Terms')],
+      [C.s('Principal'), C.n(Number(s.principal), XL_PHP)],
+      [C.s('Annual interest rate (compounded monthly)'), C.n(Number(s.annualRate) / 100, '0.00%')],
+      [C.s('Term (months)'), C.n(Number(s.months))],
+      [C.s('Monthly installment'), C.n(Number(s.payment), XL_PHP)],
+      [C.s('First due date'), C.d(dueDate(0))],
+      [C.s('SPA service fee per remittance'), C.n(Number(s.spaFee), XL_USD)],
+      [C.s('Late penalty'), C.s(`${s.penaltyPct}% of the installment, ${s.penaltyMode === 'monthly' ? 'for every 30 days late' : 'once per late installment'}${Number(s.graceDays) ? `, after a ${s.graceDays}-day grace period` : ''}`)],
+      [],
+      [C.s('Totals')],
+      [C.s('Installments received from buyer'), C.n(t.receivedCount)],
+      [C.s(`Installments sent to ${name}`), C.n(t.sentCount)],
+      [C.s('Collected from buyer (PHP)'), C.f(ref('H'), t.collected, XL_PHP)],
+      [C.s('Late penalties (PHP)'), C.f(ref('G'), t.penalties, XL_PHP)],
+      [C.s('Converted to USD'), C.f(ref('K'), t.usd, XL_USD)],
+      [C.s('SPA service fees (USD)'), C.f(ref('L'), t.fees, XL_USD)],
+      [C.s(`Net sent to ${name} (USD)`), C.f(ref('M'), t.net, XL_USD)],
+      [C.s('Principal balance remaining (PHP)'), C.n(round2(t.balance), XL_PHP)]
+    ];
+    const wsSum = makeSheet(summary, [42, 24]);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsSum, 'Summary');
+    XLSX.utils.book_append_sheet(wb, wsLedger, 'Payment Ledger');
+    XLSX.utils.book_append_sheet(wb, wsFees, 'SPA Service Fees');
+    XLSX.utils.book_append_sheet(wb, wsAm, 'Amortization');
+    XLSX.writeFile(wb, `Payments-to-${name.replace(/[^\w-]+/g, '-')}-${todayISO()}.xlsx`);
+    toast('Excel file downloaded.');
+  }
+  $('btn-export').addEventListener('click', exportExcel);
+
+  // ---------- toast ----------
+  let toastTimer;
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+  }
+
+  // ---------- init ----------
+  fillSettings();
+  selectTab('ledger');
+  renderAll();
+})();
+</script>
+</body>
+</html>
