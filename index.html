@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Payments to Uncle Tony</title>
+<meta name="theme-color" content="#0F766E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Payments">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -65,6 +73,8 @@
 
   /* Header */
   .top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+  .brand { display: flex; align-items: center; gap: 14px; flex: 1 1 360px; min-width: 0; }
+  .brand img { width: 52px; height: 52px; border-radius: 12px; flex: none; }
   .top h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 800; letter-spacing: -0.02em; }
   .top p { margin: 6px 0 0; color: var(--ink-2); }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -224,9 +234,12 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div>
-      <h1 id="title">Payments to Uncle Tony</h1>
-      <p id="subtitle"></p>
+    <div class="brand">
+      <img src="icon.svg" alt="" width="52" height="52">
+      <div>
+        <h1 id="title">Payments to Uncle Tony</h1>
+        <p id="subtitle"></p>
+      </div>
     </div>
     <div class="actions">
       <button class="btn" id="btn-record" type="button">

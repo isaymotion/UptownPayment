@@ -26,7 +26,7 @@ All terms (amount, rate, fee, penalty, grace period, first due month) can be cha
 ## Put it on GitHub Pages
 
 1. Create a new repository on GitHub (for example `uncle-tony-payments`).
-2. Upload `index.html` and this `README.md` (Add file, then Upload files, then Commit).
+2. Upload every file in this folder: `index.html`, `manifest.webmanifest`, `icon.svg`, `favicon-32.png`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, and `README.md` (Add file, then Upload files, then Commit).
 3. Open **Settings → Pages**, set the source to **Deploy from a branch**, choose `main` and `/ (root)`, and save.
 4. After a minute the app is live at `https://<your-username>.github.io/uncle-tony-payments/`.
 
@@ -35,3 +35,7 @@ If the repository is public, the app's code is public, but your payment records 
 ## Keeping your records safe
 
 Records live in your browser's local storage, so they stay on that one device and browser. Use **Download backup** regularly, and **Restore from backup** to move them to another computer or phone. Clearing your browser data will erase them.
+
+## Add it to your iPad or phone's home screen
+
+Open the live page in Safari, tap the Share button, then **Add to Home Screen**. It opens full screen with the notebook-and-pencil icon.
